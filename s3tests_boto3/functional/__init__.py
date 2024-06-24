@@ -17,6 +17,35 @@ import re
 
 config = munch.Munch
 
+# -------------------------对boto3.client和boto3.resource进行拦截-----------------------------------------
+original_boto3_client = boto3.client
+original_boto3_resource = boto3.resource
+
+aliyun_oss_config = Config(
+    s3={
+        "addressing_style": "virtual",
+        "signature_version": 's3v4'
+    }
+)
+
+
+def custom_boto3_client_with_config(*args, **kwargs):
+    kwargs['config'] = aliyun_oss_config
+
+    # 调用原始的 boto3.client 方法
+    return original_boto3_client(*args, **kwargs)
+
+
+def custom_boto3_resource_with_config(*args, **kwargs):
+    kwargs['config'] = aliyun_oss_config
+
+    # 调用原始的 boto3.client 方法
+    return original_boto3_resource(*args, **kwargs)
+
+boto3.client = custom_boto3_client_with_config
+boto3.resource = custom_boto3_resource_with_config
+# -------------------------对boto3.client和boto3.resource进行拦截-----------------------------------------
+
 # this will be assigned by setup()
 prefix = None
 
