@@ -13,3 +13,11 @@
 /venv
 
 config.yaml
+
+
+mys3tests.conf
+
+*.log
+
+.idea/
+
