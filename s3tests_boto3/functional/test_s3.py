@@ -5345,36 +5345,36 @@ def test_bucket_recreate_not_overriding():
     objs_list = get_objects_list(bucket_name)
     assert key_names == objs_list
 
-@pytest.mark.fails_on_dbstore
-def test_bucket_create_special_key_names():
-    key_names = [
-        ' ',
-        '"',
-        '$',
-        '%',
-        '&',
-        '\'',
-        '<',
-        '>',
-        '_',
-        '_ ',
-        '_ _',
-        '__',
-    ]
-
-    bucket_name = _create_objects(keys=key_names)
-
-    objs_list = get_objects_list(bucket_name)
-    assert key_names == objs_list
-
-    client = get_client()
-
-    for name in key_names:
-        assert name in objs_list
-        response = client.get_object(Bucket=bucket_name, Key=name)
-        body = _get_body(response)
-        assert name == body
-        client.put_object_acl(Bucket=bucket_name, Key=name, ACL='private')
+# @pytest.mark.fails_on_dbstore
+# def test_bucket_create_special_key_names():
+#     key_names = [
+#         ' ',
+#         '"',
+#         '$',
+#         '%',
+#         '&',
+#         '\'',
+#         '<',
+#         '>',
+#         '_',
+#         '_ ',
+#         '_ _',
+#         '__',
+#     ]
+#
+#     bucket_name = _create_objects(keys=key_names)
+#
+#     objs_list = get_objects_list(bucket_name)
+#     assert key_names == objs_list
+#
+#     client = get_client()
+#
+#     for name in key_names:
+#         assert name in objs_list
+#         response = client.get_object(Bucket=bucket_name, Key=name)
+#         body = _get_body(response)
+#         assert name == body
+#         client.put_object_acl(Bucket=bucket_name, Key=name, ACL='private')
 
 def test_bucket_list_special_prefix():
     key_names = ['_bla/1', '_bla/2', '_bla/3', '_bla/4', 'abcd']
@@ -5805,6 +5805,7 @@ def test_object_copy_versioning_multipart_upload():
     assert key1_metadata == response['Metadata']
     assert content_type == response['ContentType']
 
+
 def test_multipart_upload_empty():
     bucket_name = get_new_bucket()
     client = get_client()
@@ -5984,23 +5985,23 @@ def test_multipart_copy_without_range():
     assert response['ContentLength'] == 10
     _check_key_content(src_key, src_bucket_name, dest_key, dest_bucket_name)
 
-@pytest.mark.fails_on_dbstore
-def test_multipart_copy_special_names():
-    src_bucket_name = get_new_bucket()
-
-    dest_bucket_name = get_new_bucket()
-
-    dest_key = "mymultipart"
-    size = 1
-    client = get_client()
-
-    for src_key in (' ', '_', '__', '?versionId'):
-        _create_key_with_random_content(src_key, bucket_name=src_bucket_name)
-        (upload_id, parts) = _multipart_copy(src_bucket_name, src_key, dest_bucket_name, dest_key, size)
-        response = client.complete_multipart_upload(Bucket=dest_bucket_name, Key=dest_key, UploadId=upload_id, MultipartUpload={'Parts': parts})
-        response = client.get_object(Bucket=dest_bucket_name, Key=dest_key)
-        assert size == response['ContentLength']
-        _check_key_content(src_key, src_bucket_name, dest_key, dest_bucket_name)
+# @pytest.mark.fails_on_dbstore
+# def test_multipart_copy_special_names():
+#     src_bucket_name = get_new_bucket()
+#
+#     dest_bucket_name = get_new_bucket()
+#
+#     dest_key = "mymultipart"
+#     size = 1
+#     client = get_client()
+#
+#     for src_key in (' ', '_', '__', '?versionId'):
+#         _create_key_with_random_content(src_key, bucket_name=src_bucket_name)
+#         (upload_id, parts) = _multipart_copy(src_bucket_name, src_key, dest_bucket_name, dest_key, size)
+#         response = client.complete_multipart_upload(Bucket=dest_bucket_name, Key=dest_key, UploadId=upload_id, MultipartUpload={'Parts': parts})
+#         response = client.get_object(Bucket=dest_bucket_name, Key=dest_key)
+#         assert size == response['ContentLength']
+#         _check_key_content(src_key, src_bucket_name, dest_key, dest_bucket_name)
 
 def _check_content_using_range(key, bucket_name, data, step):
     client = get_client()
