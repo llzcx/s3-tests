@@ -147,6 +147,11 @@ def nuke_bucket(client, bucket):
             except ClientError:
                 pass
 
+    # delete incomplete multipart uploads
+    multipart_uploads = client.list_multipart_uploads(Bucket=bucket)
+    for upload in multipart_uploads.get('Uploads', []):
+        client.abort_multipart_upload(Bucket=bucket, Key=upload['Key'], UploadId=upload['UploadId'])
+
     if max_retain_date:
         # wait out the retention period (up to 60 seconds)
         now = datetime.datetime.now(max_retain_date.tzinfo)
