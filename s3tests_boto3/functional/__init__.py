@@ -124,12 +124,31 @@ def list_versions(client, bucket, batch_size):
         if len(objs):
             yield [{'Key': o['Key'], 'VersionId': o['VersionId']} for o in objs]
 
+
+# bos service does not support multiple versions of objects
+def list_objects(client, bucket, batch_size):
+    kwargs = {'Bucket': bucket, 'MaxKeys': batch_size}
+    truncated = True
+    while truncated:
+        # 使用list_objects_v2代替list_object_versions
+        listing = client.list_objects_v2(**kwargs)
+
+        # 更新参数以获取下一批对象
+        if 'NextContinuationToken' in listing:
+            kwargs['ContinuationToken'] = listing['NextContinuationToken']
+        truncated = listing['IsTruncated']
+
+        # 获取当前批次的对象
+        objs = listing.get('Contents', [])
+        if len(objs):
+            yield [{'Key': o['Key']} for o in objs]
+
 def nuke_bucket(client, bucket):
     batch_size = 128
     max_retain_date = None
 
     # list and delete objects in batches
-    for objects in list_versions(client, bucket, batch_size):
+    for objects in list_objects(client, bucket, batch_size):
         delete = client.delete_objects(Bucket=bucket,
                 Delete={'Objects': objects, 'Quiet': True},
                 BypassGovernanceRetention=True)
