@@ -31,16 +31,24 @@ aliyun_oss_config = Config(
 
 def custom_boto3_client_with_config(*args, **kwargs):
     kwargs['config'] = aliyun_oss_config
-
+    new_kwargs = {
+        'aws_access_key_id': kwargs['aws_access_key_id'],
+        'aws_secret_access_key': kwargs['aws_secret_access_key'],
+        'region_name': 'cn-north-1',
+    }
     # 调用原始的 boto3.client 方法
-    return original_boto3_client(*args, **kwargs)
+    return original_boto3_client('s3', **new_kwargs)
 
 
 def custom_boto3_resource_with_config(*args, **kwargs):
     kwargs['config'] = aliyun_oss_config
-
+    new_kwargs = {
+        'aws_access_key_id': kwargs['aws_access_key_id'],
+        'aws_secret_access_key': kwargs['aws_secret_access_key'],
+        'region_name': 'cn-north-1',
+    }
     # 调用原始的 boto3.client 方法
-    return original_boto3_resource(*args, **kwargs)
+    return original_boto3_resource('s3', **new_kwargs)
 
 boto3.client = custom_boto3_client_with_config
 boto3.resource = custom_boto3_resource_with_config
@@ -132,7 +140,8 @@ def nuke_bucket(client, bucket):
     for objects in list_versions(client, bucket, batch_size):
         delete = client.delete_objects(Bucket=bucket,
                 Delete={'Objects': objects, 'Quiet': True},
-                BypassGovernanceRetention=True)
+                # BypassGovernanceRetention=True An error occurred (InvalidArgument) when calling the DeleteObjects operation: x-amz-bypass-governance-retention is only applicable to Object Lock enabled buckets.
+                                       )
 
         # check for object locks on 403 AccessDenied errors
         for err in delete.get('Errors', []):
@@ -631,7 +640,7 @@ def get_new_bucket_resource(name=None):
     if name is None:
         name = get_new_bucket_name()
     bucket = s3.Bucket(name)
-    bucket_location = bucket.create()
+    bucket_location = bucket.create(CreateBucketConfiguration={'LocationConstraint': 'cn-north-1'})
     return bucket
 
 def get_new_bucket(client=None, name=None):
@@ -646,7 +655,7 @@ def get_new_bucket(client=None, name=None):
     if name is None:
         name = get_new_bucket_name()
 
-    client.create_bucket(Bucket=name)
+    client.create_bucket(Bucket=name, CreateBucketConfiguration={'LocationConstraint': 'cn-north-1'})
     return name
 
 def get_parameter_name():
